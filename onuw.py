@@ -18,7 +18,7 @@ def perform_night_actions(idtoplayers, roletoplayers, Roles):
                 if rolenumber == 0:
                     obj = roletoplayers["Doppelganger"]
                     print(obj.Role())
-                if rolenumber == 1:
+                elif rolenumber == 1:
                     if "Werewolf2" not in Roles:
                         obj = roletoplayers["Werewolf"]
                         obj2 = roletoplayers["Werewolf2"]
@@ -26,12 +26,28 @@ def perform_night_actions(idtoplayers, roletoplayers, Roles):
                     else:
                         obj = roletoplayers["Werewolf"]
                         print(obj.Role())
-                if rolenumber == 3:
+                elif rolenumber == 2:
+                    obj = roletoplayers["Minion"]
+                    print(obj.Role())
+                elif rolenumber == 3:
                     obj = roletoplayers["Mason"]
                     obj2 = roletoplayers["Mason2"]
                     print(obj.ID() + " and " + obj2.ID())
-                obj = roletoplayers[rolenumber]
-                print(obj.role)
+                elif rolenumber == 4:
+                    obj = roletoplayers["Seer"]
+                    print(obj.Role())
+                elif rolenumber == 5:
+                    obj = roletoplayers["Robber"]
+                    print(obj.Role())
+                elif rolenumber == 6:
+                    obj = roletoplayers["Troublemaker"]
+                    print(obj.Role())
+                elif rolenumber == 7:
+                    obj = roletoplayers["Drunk"]
+                    print(obj.Role())
+                elif rolenumber == 8:
+                    obj = roletoplayers["Insomniac"]
+                    print(obj.Role())
                 rolenumber += 1
             else:
                 rolenumber += 1
