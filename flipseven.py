@@ -15,6 +15,7 @@ class FlipSevenPlayer():
         self.passTurn = False
         self.busted = False
         self.points = 0
+        self.seven = False
 
 class Card():
     def __init__(self, value, dupebad=False, modifier=False):
@@ -46,6 +47,7 @@ async def calcPlayerPoints(ctx):
             player.busted = False
         player.points += points
         player.passTurn = False
+        player.seven = False
         player.inventory = []
         await ctx.send(f"{player.name} got {points} more points, bring them to a total of {player.points}")
 
@@ -78,7 +80,7 @@ async def playflipseven(ctx):
     if turnNum == 0:
         await ctx.send(f"round {roundNum}")
     getCurrentPlayer()
-    if not currentPlayer.passTurn and not currentPlayer.busted:
+    if not currentPlayer.passTurn and not currentPlayer.busted and not currentPlayer.seven:
         await ctx.send(f"what do you want to do {turnOrder[turnNum % len(turnOrder)]}?")
     else:
         turnNum += 1
@@ -98,7 +100,7 @@ async def drawcard(ctx):
                     allBusted = True
                     turnNum+=1
                     for pid, player in players.items():
-                        if not player.busted and not player.passTurn:
+                        if not player.busted and not player.passTurn and not player.seven:
                             allBusted = False
                             break
                     if allBusted:
@@ -106,6 +108,14 @@ async def drawcard(ctx):
                         roundNum+=1
                         turnNum = 0
                         await calcPlayerPoints(ctx)
+                        win = checkWin()
+                        if win:
+                            await ctx.send(f"{win} has won!!!!!")
+                            return
+            gotseven = checkSeven(players[ctx.author.id].inventory)
+            if gotseven and not players[ctx.author.id].busted:
+                players[ctx.author.id].inventory.append(Card("15", dupebad=True))
+                players[ctx.author.id].seven = True
         if not players[ctx.author.id].busted:
             players[ctx.author.id].inventory.append(deck.pop(0))
             inventory_string = ", ".join([card.value for card in players[ctx.author.id].inventory])
@@ -125,7 +135,7 @@ async def passturn(ctx):
                 currentPlayer = player
         allPassed = True
         for pid, player in players.items():
-            if not player.passTurn and not player.busted:
+            if not player.passTurn and not player.busted and not player.seven:
                 allPassed = False
                 break
         turnNum += 1
@@ -137,6 +147,10 @@ async def passturn(ctx):
             roundNum+=1
             turnNum = 0
             await calcPlayerPoints(ctx)
+            win = checkWin()
+            if win:
+                await ctx.send(f"{win} has won!!!!!")
+                return
     else:
         await ctx.send("not you")
     await playflipseven(ctx)
@@ -146,3 +160,27 @@ def getCurrentPlayer():
     for pid, player in players.items():
         if player.name == turnOrder[turnNum % len(turnOrder)]:
             currentPlayer = player
+
+def checkWin():
+    global players
+    winning_players = {}
+    for pid, player in players.items():
+        if player.points > 200:
+            winning_players[player.name] = player.points
+    if len(winning_players) > 0:
+        # no ties
+        max_points = max(winning_players, key=winning_players.get)
+        return max_points
+    else:
+        return False
+    
+def checkSeven(inventory):
+    dupebadcount = 0
+    for card in inventory:
+        if card.dupebad:
+            dupebadcount += 1
+    if dupebadcount == 7:
+        return True
+    else:
+        return False
+    
