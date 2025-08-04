@@ -46,7 +46,7 @@ def main():
     @bot.command()
     async def onuw(ctx):
         await start(ctx)
-        await onuw_file.make_onuw(playerIds, members, playerNames)
+        await onuw_file.make_onuw(playerIds, members, playerNames,ctx)
 
         
     async def start(ctx):
