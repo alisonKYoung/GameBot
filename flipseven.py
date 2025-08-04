@@ -46,6 +46,7 @@ async def calcPlayerPoints(ctx):
             player.busted = False
         player.points += points
         player.passTurn = False
+        player.inventory = []
         await ctx.send(f"{player.name} got {points} more points, bring them to a total of {player.points}")
 
 async def setupflipseven(playerIDs, playerNames, ctx):
@@ -61,7 +62,7 @@ async def setupflipseven(playerIDs, playerNames, ctx):
     random.seed()
     random.shuffle(deck)
     turnOrder = [playerNames[i] for i in range(len(playerNames))]
-    random.seed(1)
+    random.seed()
     random.shuffle(turnOrder)
     await ctx.send("turn order")
     for player in turnOrder:
@@ -77,7 +78,7 @@ async def playflipseven(ctx):
     if turnNum == 0:
         await ctx.send(f"round {roundNum}")
     getCurrentPlayer()
-    if not currentPlayer.passTurn:
+    if not currentPlayer.passTurn and not currentPlayer.busted:
         await ctx.send(f"what do you want to do {turnOrder[turnNum % len(turnOrder)]}?")
     else:
         turnNum += 1

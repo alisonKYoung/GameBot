@@ -55,11 +55,11 @@ def main():
         await flipseven.setupflipseven(playerIds, playerNames, ctx)
     
     @bot.command()
-    async def draw(ctx):
+    async def hit(ctx):
         await flipseven.drawcard(ctx)
     
     @bot.command()
-    async def passturn(ctx):
+    async def stay(ctx):
         await flipseven.passturn(ctx)
 
         
