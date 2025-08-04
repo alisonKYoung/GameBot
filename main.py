@@ -5,6 +5,7 @@ from discord.ext import commands
 from player import Player
 import onuw as onuw_file
 import discord_commands
+import flipseven
 
         
 playerIds = []
@@ -48,6 +49,19 @@ def main():
         await start(ctx)
         await onuw_file.make_onuw(playerIds, members, playerNames,ctx)
 
+    @bot.command()
+    async def seven(ctx):
+        await start(ctx)
+        await flipseven.setupflipseven(playerIds, playerNames, ctx)
+    
+    @bot.command()
+    async def hit(ctx):
+        await flipseven.drawcard(ctx)
+    
+    @bot.command()
+    async def stay(ctx):
+        await flipseven.passturn(ctx)
+
         
     async def start(ctx):
         global playerIds, members, playerNames
@@ -67,8 +81,6 @@ def main():
         random.seed()
 
         playerIds = members[:]
-        for i in playerIds:
-            await ctx.send(i.name)
         random.shuffle(playerIds)
 
         playerNames = [member.name for member in members]
