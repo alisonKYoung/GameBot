@@ -31,11 +31,11 @@ class Card():
         else:
             self.point_total = 0
     def get_emoji_string(self, ctx, bot, value):
-        number = str(value) + "_"
-        id = emoji_deck[number]
+        emoji_name = str(value) + "_"
+        id = emoji_deck[emoji_name]
         if self.modifier:
             emoji_name += "-modifier"
-        return f"<:{number}:{id}>"
+        return f"<:{emoji_name}:{id}>"
 
 async def calcPlayerPoints(ctx):
     global players
