@@ -61,6 +61,10 @@ def main():
     @bot.command()
     async def stay(ctx):
         await flipseven.passturn(ctx)
+    
+    @bot.command()
+    async def freeze(ctx, name):
+        await flipseven.freeze(ctx, name)
 
         
     async def start(ctx):
