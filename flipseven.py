@@ -34,7 +34,7 @@ class Card():
         emoji_name = str(value) + "_"
         id = emoji_deck[emoji_name]
         if self.modifier:
-            emoji_name += "-modifier"
+            emoji_name += "modifier"
         return f"<:{emoji_name}:{id}>"
 
 async def calcPlayerPoints(ctx):
