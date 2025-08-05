@@ -1,5 +1,6 @@
 import random
 import time
+from collections import deque
 
 players = {}
 deck = []
@@ -57,10 +58,7 @@ async def setupflipseven(playerIDs, playerNames, ctx):
     for i in range(len(playerIDs)):
         players[playerIDs[i].id] = FlipSevenPlayer(playerIDs[i].id)
         players[playerIDs[i].id].name = playerNames[i]
-    deck.append(Card("0", dupebad=True))
-    for i in range(13):
-        for j in range(i):
-            deck.append(Card(str(i), dupebad=True))
+    setupdeck()
     random.seed()
     random.shuffle(deck)
     turnOrder = [playerNames[i] for i in range(len(playerNames))]
@@ -79,6 +77,8 @@ async def playflipseven(ctx):
     global turnNum, roundNum, turnOrder, currentPlayer
     if turnNum == 0:
         await ctx.send(f"round {roundNum}")
+        if roundNum > 1:
+            rotateTurnOrder()
     getCurrentPlayer()
     if not currentPlayer.passTurn and not currentPlayer.busted and not currentPlayer.seven:
         await ctx.send(f"what do you want to do {turnOrder[turnNum % len(turnOrder)]}?")
@@ -87,9 +87,13 @@ async def playflipseven(ctx):
         await playflipseven(ctx)
 
 async def drawcard(ctx):
-    global turnNum, deck, players
+    global turnNum, deck, players, roundNum
     if ctx.author.name == turnOrder[turnNum % len(turnOrder)]:
-        await ctx.send(f"you drew a {deck[0].value} {deck[0].get_emoji_string(ctx)}")
+        if len(deck) == 0:
+            await ctx.send("shuffling...")
+            setupdeck()
+            time.sleep(0.5)
+        await ctx.send(f"you drew {deck[0].value} {deck[0].get_emoji_string(ctx)}")
         if deck[0].dupebad:
             for card in players[ctx.author.id].inventory:
                 if card.value == deck[0].value:
@@ -97,12 +101,7 @@ async def drawcard(ctx):
                     for pid, player in players.items():
                         if player.name == turnOrder[turnNum % len(turnOrder)]:
                             player.busted = True
-                    allBusted = True
-                    turnNum+=1
-                    for pid, player in players.items():
-                        if not player.busted and not player.passTurn and not player.seven:
-                            allBusted = False
-                            break
+                    allBusted = checkAllDone()
                     if allBusted:
                         await ctx.send("everyone is out now")
                         roundNum+=1
@@ -112,12 +111,28 @@ async def drawcard(ctx):
                         if win:
                             await ctx.send(f"{win} has won!!!!!")
                             return
+                        else:
+                            await playflipseven(ctx)
+                            return
+            
+        if not players[ctx.author.id].busted:
+            players[ctx.author.id].inventory.append(deck.pop(0))
             gotseven = checkSeven(players[ctx.author.id].inventory)
             if gotseven and not players[ctx.author.id].busted:
                 players[ctx.author.id].inventory.append(Card("15", dupebad=True))
                 players[ctx.author.id].seven = True
-        if not players[ctx.author.id].busted:
-            players[ctx.author.id].inventory.append(deck.pop(0))
+                allDone = checkAllDone()
+                if allDone:
+                    roundNum+=1
+                    turnNum = 0
+                    await calcPlayerPoints(ctx)
+                    win = checkWin()
+                    if win:
+                        await ctx.send(f"{win} has won!!!!!")
+                        return
+                    else:
+                        await playflipseven(ctx)
+                        return
             inventory_string = ", ".join([card.value for card in players[ctx.author.id].inventory])
             await ctx.send(f"you now have: {inventory_string}")
             turnNum+=1
@@ -133,16 +148,12 @@ async def passturn(ctx):
             if player.name == turnOrder[turnNum % len(turnOrder)]:
                 player.passTurn = True
                 currentPlayer = player
-        allPassed = True
-        for pid, player in players.items():
-            if not player.passTurn and not player.busted and not player.seven:
-                allPassed = False
-                break
+        
         turnNum += 1
 
         inventory_string = ", ".join([card.value for card in currentPlayer.inventory])
         await ctx.send(f"you still have: {inventory_string}")
-
+        allPassed = checkAllDone()
         if allPassed:
             roundNum+=1
             turnNum = 0
@@ -160,6 +171,7 @@ def getCurrentPlayer():
     for pid, player in players.items():
         if player.name == turnOrder[turnNum % len(turnOrder)]:
             currentPlayer = player
+            return
 
 def checkWin():
     global players
@@ -184,3 +196,26 @@ def checkSeven(inventory):
     else:
         return False
     
+def setupdeck():
+    global deck
+    deck = []
+    deck.append(Card("0", dupebad=True))
+    for i in range(13):
+        for j in range(i):
+            deck.append(Card(str(i), dupebad=True))
+
+
+def checkAllDone():
+    global players
+    allDone = True
+    for pid, player in players.items():
+        if not player.passTurn and not player.busted and not player.seven:
+            allDone = False
+            break
+    return allDone
+
+def rotateTurnOrder():
+    global turnOrder
+    d = deque(turnOrder)
+    d.rotate(1)
+    turnOrder = list(d)

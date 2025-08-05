@@ -81,7 +81,6 @@ def main():
         random.seed()
 
         playerIds = members[:]
-        random.shuffle(playerIds)
 
         playerNames = [member.name for member in members]
 

@@ -53,6 +53,8 @@ async def perform_night_actions(idtoplayers, roletoplayers, Roles, Members,ctx):
                 rolenumber += 1
 
 async def make_onuw(playerIDs, members, playerNames , ctx):
+    random.seed()
+    random.shuffle(playerIDs)
     playern = len(members)
     print("player count")
     print(playern)
