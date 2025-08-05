@@ -64,7 +64,12 @@ def main():
     
     @bot.command()
     async def freeze(ctx, name):
+        ctx.send("detected")
         await flipseven.freeze(ctx, name)
+    
+    @bot.command()
+    async def flip3(ctx, name):
+        await flipseven.flipthree(ctx, name)
 
         
     async def start(ctx):
