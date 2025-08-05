@@ -298,17 +298,18 @@ async def flipthree(ctx, name):
         if deck[0].dupebad:
             for card in players[name].inventory:
                 if card.value == deck[0].value and not card.modifier:
-                    await ctx.send(f"you busted :(")
-                    for pid, player in players.items():
-                        if player.name == name:
-                            player.busted = True
-                            flipthree_event.set()
-                            return
-            else:
-                await ctx.send("saved by the second chance")
-                players[name].inventory = list(filter(lambda item: item.value != "secondchance", players[name].inventory))
-                flipthree_event.set()
-                return
+                    if not "secondchance" in [card.value for card in players[ctx.author.name].inventory]:
+                        await ctx.send(f"you busted :(")
+                        for pid, player in players.items():
+                            if player.name == name:
+                                player.busted = True
+                                flipthree_event.set()
+                                return
+                    else:
+                        await ctx.send("saved by the second chance")
+                        players[name].inventory = list(filter(lambda item: item.value != "secondchance", players[name].inventory))
+                        flipthree_event.set()
+                        return
         if not players[name].busted:
             if deck[0].value == "freeze":
                 await ctx.send("enter ?freeze [username of who you want to freeze]")
