@@ -7,6 +7,11 @@ turnOrder = []
 turnNum = 0
 roundNum = 1
 currentPlayer = ""
+emoji_deck = {"1_":1401823011325218836,"2_":1401826857589932042,"3_":1401826872236576880,"4_":1401826887373951046,
+              "5_":1401826981041143828,"6_":1401826995309908121,"7_":1401827010875097278,"8_":1401827021797199943,
+              "9_":1401827036560883813,"10_":1401827050762801235,"11_":1401827064725639180,"12_":1401827076956225557,
+              "0_":1401827088037711932}
+
 
 class FlipSevenPlayer():
     def __init__(self, PlayerID):
@@ -26,15 +31,12 @@ class Card():
             self.point_total = int(value)
         else:
             self.point_total = 0
-    def get_emoji_string(self, ctx):
-        emoji_string = "pikachu"
+    def get_emoji_string(self, ctx, bot, value):
+        emoji_name = str(value) + "_"
+        id = emoji_deck[emoji_name]
         if self.modifier:
-            emoji_string = emoji_string + "-modifier"
-        #f"card-{emoji_string}"
-        for e in ctx.guild.emojis:
-            if e.name == emoji_string:
-                emoji_string = f"<:{e.name}:{e.id}>"
-        return emoji_string
+            emoji_name += "modifier"
+        return f"<:{emoji_name}:{id}>"
 
 async def calcPlayerPoints(ctx):
     global players
@@ -89,7 +91,7 @@ async def playflipseven(ctx):
 async def drawcard(ctx):
     global turnNum, deck, players
     if ctx.author.name == turnOrder[turnNum % len(turnOrder)]:
-        await ctx.send(f"you drew a {deck[0].value} {deck[0].get_emoji_string(ctx)}")
+        await ctx.send(f"you drew a {deck[0].value} {deck[0].get_emoji_string(ctx, ctx.bot,deck[0].value)}")
         if deck[0].dupebad:
             for card in players[ctx.author.id].inventory:
                 if card.value == deck[0].value:
