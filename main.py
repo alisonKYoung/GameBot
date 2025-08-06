@@ -6,11 +6,13 @@ from player import Player
 import onuw as onuw_file
 import discord_commands
 import flipseven
+import time
 
         
 playerIds = []
 members = []
-playerNames = []       
+playerNames = []
+timeSinceLastMessage = time.time()       
 
 print("____________________________STARTING___________________________________")
 
@@ -56,11 +58,21 @@ def main():
     
     @bot.command()
     async def hit(ctx):
-        await flipseven.drawcard(ctx)
+        if checkTime():
+            await flipseven.drawcard(ctx)
     
     @bot.command()
     async def stay(ctx):
-        await flipseven.passturn(ctx)
+        if checkTime():
+            await flipseven.passturn(ctx)
+    
+    @bot.command()
+    async def freeze(ctx, name):
+        await flipseven.freeze(ctx, name)
+    
+    @bot.command()
+    async def flip3(ctx, name):
+        await flipseven.flipthree(ctx, name)
 
         
     async def start(ctx):
@@ -85,8 +97,14 @@ def main():
         playerNames = [member.name for member in members]
 
         
-
     bot.run(TOKEN)
 
+def checkTime():
+    global timeSinceLastMessage
+    if time.time() - timeSinceLastMessage >= 0.5:
+        timeSinceLastMessage = time.time()
+        return True
+    else:
+        return False
 if __name__ == '__main__':
     main()
