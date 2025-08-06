@@ -283,12 +283,20 @@ async def freeze(ctx, name):
         try:
             players[name].passTurn = True
             await ctx.send(f"{name} has been frozen")
+            await finish_flip_three(ctx)
         except KeyError:
             await ctx.send("they don't exist")
-        await finish_flip_three(ctx)
 
 async def flipthree(ctx, name):
     global deck, players, worstcasescenario
+    try:
+        players[name]
+    except KeyError:
+        await ctx.send("they don't exist")
+        return
+    if players[name].passTurn or players[name].busted or players[name].seven:
+        await ctx.send("nuh uh")
+        return
     if ctx.author.name == currentPlayer.name and players[ctx.author.name].inventory[-1].value == "flip3":
         for i in range(3):
             schance = False
