@@ -343,7 +343,7 @@ async def flipthree(ctx, name):
                     await finish_flip_three(ctx)
                     return
                         
-                inventory_string = ", ".join([card.get_emoji_string(ctx, ctx.bot,card.value) for card in players[ctx.author.name].inventory])
+                inventory_string = ", ".join([card.get_emoji_string(ctx, ctx.bot,card.value) for card in players[name].inventory])
                 await ctx.send(f"{name} now has: {inventory_string}")
         if worstcasescenario:
             players[name].inventory.append(Card("freeze"))
