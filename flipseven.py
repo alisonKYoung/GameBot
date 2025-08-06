@@ -298,6 +298,7 @@ async def flipthree(ctx, name):
         await ctx.send("nuh uh")
         return
     if ctx.author.name == currentPlayer.name and players[ctx.author.name].inventory[-1].value == "flip3":
+        worstcaseindex = 4
         for i in range(3):
             schance = False
             if len(deck) == 0:
@@ -327,8 +328,9 @@ async def flipthree(ctx, name):
                 if deck[0].value == "freeze":
                     await ctx.send("enter ?freeze [username of who you want to freeze] once you have finished")
                     worstcasescenario = True
+                    worstcaseindex = i
 
-                if not worstcasescenario:
+                if not worstcasescenario and worstcaseindex != i:
                     players[name].inventory.append(deck.pop(0))
                 else:
                     deck.pop(0)
