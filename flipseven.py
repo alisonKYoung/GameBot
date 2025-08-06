@@ -330,7 +330,7 @@ async def flipthree(ctx, name):
                     worstcasescenario = True
                     worstcaseindex = i
 
-                if not worstcasescenario and worstcaseindex != i:
+                if worstcaseindex != i:
                     players[name].inventory.append(deck.pop(0))
                 else:
                     deck.pop(0)
