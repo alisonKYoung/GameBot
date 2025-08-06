@@ -9,8 +9,7 @@ turnOrder = []
 turnNum = 0
 roundNum = 1
 currentPlayer = ""
-freeze_event = threading.Event()
-flipthree_event = threading.Event()
+worstcasescenario = False
 emoji_deck = {"1_":1401823011325218836,"2_":1401826857589932042,"3_":1401826872236576880,"4_":1401826887373951046,
               "5_":1401826981041143828,"6_":1401826995309908121,"7_":1401827010875097278,"8_":1401827021797199943,
               "9_":1401827036560883813,"10_":1401827050762801235,"11_":1401827064725639180,"12_":1401827076956225557,
@@ -71,7 +70,9 @@ async def calcPlayerPoints(ctx):
         await ctx.send(f"{player.name} got {points} more points, bring them to a total of {player.points}")
 
 async def setupflipseven(playerIDs, playerNames, ctx):
-    global deck, player, turnOrder
+    global deck, player, turnOrder, turnNum, roundNum
+    turnNum = 0
+    roundNum = 1
     await ctx.send(f"flip7flip7flip7flip7flip7flip7flip7")
     for i in range(len(playerIDs)):
         players[playerIDs[i].name] = FlipSevenPlayer(playerIDs[i].id)
@@ -105,8 +106,9 @@ async def playflipseven(ctx):
         await playflipseven(ctx)
 
 async def drawcard(ctx):
-    global turnNum, deck, players, roundNum, freeze_event
+    global turnNum, deck, players, roundNum
     if ctx.author.name == turnOrder[turnNum % len(turnOrder)]:
+        schance = False
         if len(deck) == 0:
             await ctx.send("shuffling...")
             setupdeck()
@@ -117,9 +119,7 @@ async def drawcard(ctx):
                 if card.value == deck[0].value and not card.modifier:
                     if not "secondchance" in [card.value for card in players[ctx.author.name].inventory]:
                         await ctx.send(f"you busted :(")
-                        for pid, player in players.items():
-                            if player.name == turnOrder[turnNum % len(turnOrder)]:
-                                player.busted = True
+                        players[ctx.author.name].busted = True
                         allBusted = checkAllDone()
                         if allBusted:
                             await ctx.send("everyone is out now")
@@ -133,26 +133,26 @@ async def drawcard(ctx):
                             else:
                                 await playflipseven(ctx)
                                 return
+                        deck.pop(0)
+                        break
                     else:
                         await ctx.send("saved by the second chance")
+                        schance = True
                         players[ctx.author.name].inventory = list(filter(lambda item: item.value != "secondchance", players[ctx.author.name].inventory))
+                        deck.pop(0)
                         await playflipseven(ctx)
                         return
                     
             
-        if not players[ctx.author.name].busted:
+        if not players[ctx.author.name].busted and not schance:
             card = deck[0]
             players[ctx.author.name].inventory.append(deck.pop(0))
             if card.value == "freeze":
                 await ctx.send("enter ?freeze [username of who you want to freeze]")
-                freeze_event.clear()
-                freeze_event.wait()
-                freeze_event.clear()
+                return
             if card.value == "flip3":
                 await ctx.send("enter ?flip3 [username of who you want to flip 3 cards]")
-                flipthree_event.clear()
-                flipthree_event.wait()
-                flipthree_event.clear()
+                return
             allBusted = checkAllDone()
             if allBusted:
                 await ctx.send("everyone is out now")
@@ -277,53 +277,88 @@ def rotateTurnOrder():
     turnOrder = list(d)
 
 async def freeze(ctx, name):
-    global freeze_event, currentPlayer, players
+    global currentPlayer, players
     getCurrentPlayer()
-    if ctx.author.name == currentPlayer.name:
+    if ctx.author.name == currentPlayer.name and players[ctx.author.name].inventory[-1].value == "freeze":
         try:
             players[name].passTurn = True
             await ctx.send(f"{name} has been frozen")
-            freeze_event.set()
         except KeyError:
             await ctx.send("they don't exist")
+        await finish_flip_three(ctx)
 
 async def flipthree(ctx, name):
-    global freeze_event, flipthree_event, deck, players
-    for i in range(3):
-        if len(deck) == 0:
-                await ctx.send("shuffling...")
-                setupdeck()
-                time.sleep(0.5)
-        await ctx.send(f"you drew {deck[0].get_emoji_string(ctx, ctx.bot,deck[0].value)} ({deck[0].value})")
-        if deck[0].dupebad:
-            for card in players[name].inventory:
-                if card.value == deck[0].value and not card.modifier:
-                    if not "secondchance" in [card.value for card in players[ctx.author.name].inventory]:
-                        await ctx.send(f"you busted :(")
-                        for pid, player in players.items():
-                            if player.name == name:
-                                player.busted = True
-                                flipthree_event.set()
-                                return
-                    else:
-                        await ctx.send("saved by the second chance")
-                        players[name].inventory = list(filter(lambda item: item.value != "secondchance", players[name].inventory))
-                        flipthree_event.set()
-                        return
-        if not players[name].busted:
-            if deck[0].value == "freeze":
-                await ctx.send("enter ?freeze [username of who you want to freeze]")
-                freeze_event.wait()
-                freeze_event.clear()
+    global deck, players, worstcasescenario
+    if ctx.author.name == currentPlayer.name and players[ctx.author.name].inventory[-1].value == "flip3":
+        for i in range(3):
+            schance = False
+            if len(deck) == 0:
+                    await ctx.send("shuffling...")
+                    setupdeck()
+                    time.sleep(0.5)
+            await ctx.send(f"you drew {deck[0].get_emoji_string(ctx, ctx.bot,deck[0].value)} ({deck[0].value})")
+            if deck[0].dupebad:
+                for card in players[name].inventory:
+                    if card.value == deck[0].value and not card.modifier:
+                        if not "secondchance" in [card.value for card in players[ctx.author.name].inventory]:
+                            await ctx.send(f"you busted :(")
+                            for pid, player in players.items():
+                                if player.name == name:
+                                    player.busted = True
+                                    deck.pop(0)
+                                    if worstcasescenario:
+                                        players[name].inventory.append(Card("freeze"))
+                                    await finish_flip_three(ctx)
+                                    return
+                        else:
+                            await ctx.send("saved by the second chance")
+                            players[name].inventory = list(filter(lambda item: item.value != "secondchance", players[name].inventory))
+                            deck.pop(0)
+                            schance = True
+            if not players[name].busted and not schance:
+                if deck[0].value == "freeze":
+                    await ctx.send("enter ?freeze [username of who you want to freeze] once you have finished")
+                    worstcasescenario = True
 
+                if not worstcasescenario:
+                    players[name].inventory.append(deck.pop(0))
+                else:
+                    deck.pop(0)
+                gotseven = checkSeven(players[name].inventory)
+                if gotseven and not players[name].busted:
+                    players[name].inventory.append(Card("15", dupebad=True))
+                    players[name].seven = True
+                    if worstcasescenario:
+                        players[name].inventory.append(Card("freeze"))
+                    await finish_flip_three(ctx)
+                    return
+                        
+                inventory_string = ", ".join([card.get_emoji_string(ctx, ctx.bot,card.value) for card in players[ctx.author.name].inventory])
+                await ctx.send(f"{name} now has: {inventory_string}")
+        if worstcasescenario:
+            players[name].inventory.append(Card("freeze"))
+        await finish_flip_three(ctx)
+        return
 
-            players[name].inventory.append(deck.pop(0))
-            gotseven = checkSeven(players[name].inventory)
-            if gotseven and not players[name].busted:
-                players[name].inventory.append(Card("15", dupebad=True))
-                players[name].seven = True
-                flipthree_event.set()
-                return
-                    
-            inventory_string = ", ".join([card.get_emoji_string(ctx, ctx.bot,card.value) for card in players[ctx.author.name].inventory])
-            await ctx.send(f"{name} now has: {inventory_string}")
+async def finish_flip_three(ctx):
+    global players, roundNum, turnNum, worstcasescenario
+    if worstcasescenario:
+        worstcasescenario = False
+        await worstcase(ctx)
+        return
+    allBusted = checkAllDone()
+    if allBusted:
+        await ctx.send("everyone is out now")
+        roundNum+=1
+        turnNum = 0
+        await calcPlayerPoints(ctx)
+        win = checkWin()
+        if win:
+            await ctx.send(f"{win} has won!!!!!")
+            return
+    turnNum += 1
+    await playflipseven(ctx)
+    return
+
+async def worstcase(ctx):
+    await ctx.send("who do you want to freeze?")
