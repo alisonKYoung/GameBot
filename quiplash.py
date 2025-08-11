@@ -1,6 +1,7 @@
 import random
 import discord_commands
 from collections import deque
+import time
 
 class QuiplashPlayer():
     def __init__(self, playerId):
@@ -63,8 +64,11 @@ class Game():
     async def sendVote(self):
         q = self.questions[self.votingQuestionNum]
         await self.channelContext.send(f"Question: **{q.text}**")
+        time.sleep(0.5)
         await self.channelContext.send(q.playerAnswers[q.players[0]])
+        time.sleep(0.5)
         await self.channelContext.send("vs")
+        time.sleep(0.5)
         await self.channelContext.send(q.playerAnswers[q.players[1]])
     
     def calcPoints(self):
@@ -91,13 +95,22 @@ class Question():
         self.votes = 0
         self.alreadyVoted = []
         self.votesTally = {}
-    def addVote(self, messageText):
+    def addVote(self, messageText, user):
         for name, answer in self.playerAnswers.items():
             if answer == messageText:
                 self.votesTally[name] += 1
                 self.votes += 1
+                self.alreadyVoted.append(user.name)
                 break
         return self.votes
+    #this won't do anything for now because discord doesn't track removing reactions well
+    def removeVote(self, messageText, user):
+        for name, answer in self.playerAnswers.items():
+            if answer == messageText and not user.name in self.players:
+                self.votesTally[name] -= 1
+                self.votes -= 1
+                self.alreadyVoted.remove(user.name)
+                break
 
 game = Game()
 
@@ -119,6 +132,8 @@ async def setupquiplash(playerIds, ctx):
 async def nextRound(ctx):
     global game
     await game.newRound()
+    if game.roundNum > 3:
+        return
     await ctx.send(f"round {game.roundNum}")
     for i in range(game.numQuestions):
         game.questions.append(Question(game.allQuestions[i]))
@@ -153,21 +168,22 @@ async def setupVote():
     await game.sendVote()
 
 async def newVote(reaction, user):
-    if not user.name in game.questions[game.votingQuestionNum].alreadyVoted:
-        game.questions[game.votingQuestionNum].alreadyVoted.append(user.name)
-        numVotes = game.questions[game.votingQuestionNum].addVote(reaction.message.content)
-        if numVotes == len(game.players) - 2:
-            game.votingQuestionNum += 1
-            if game.votingQuestionNum == len(game.questions):
-                await tallyPoints()
-            else:
-                await setupVote()
+    global game
+    if str(reaction.emoji) == "👍":
+        if not user.name in game.questions[game.votingQuestionNum].alreadyVoted:
+            numVotes = game.questions[game.votingQuestionNum].addVote(reaction.message.content, user)
+            if numVotes == len(game.players) - 2:
+                game.votingQuestionNum += 1
+                if game.votingQuestionNum == len(game.questions):
+                    await tallyPoints()
+                else:
+                    await setupVote()
 
 async def tallyPoints():
     global game
     game.calcPoints()
     await game.channelContext.send("---------------leaderboard---------------")
-    players_copy = game.players
+    players_copy = dict(game.players)
     for i in range(len(game.players)):
         name = max(players_copy, key = lambda k: players_copy[k].points)
         await game.channelContext.send(f"{name}: {str(game.players[name].points)}")
