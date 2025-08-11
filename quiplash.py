@@ -26,6 +26,7 @@ class Game():
         self.winnerBonus = 0
         self.votingQuestionNum = 0
     def distributeQuestions(self):
+        temp = 0
         for q in self.questions:
             q.players.append(self.playerNames[0])
             self.players[self.playerNames[0]].questions.append(q.text)
@@ -35,7 +36,8 @@ class Game():
             d = deque(self.playerNames)
             d.rotate(2)
             self.playerNames = list(d)
-            if self.numQuestions % 2 == 0:
+            temp += 1
+            if self.numQuestions % 2 == 0 and temp%2 == 0:
                 random.seed()
                 random.shuffle(self.playerNames)
     
