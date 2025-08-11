@@ -7,6 +7,7 @@ import onuw as onuw_file
 import discord_commands
 import flipseven
 import time
+import quiplash as quip
 
         
 playerIds = []
@@ -57,6 +58,11 @@ def main():
         await flipseven.setupflipseven(playerIds, playerNames, ctx)
     
     @bot.command()
+    async def quiplash(ctx):
+        await start(ctx)
+        await quip.setupquiplash(playerIds, ctx)
+    
+    @bot.command()
     async def hit(ctx):
         if checkTime():
             await flipseven.drawcard(ctx)
@@ -73,6 +79,15 @@ def main():
     @bot.command()
     async def flip3(ctx, name):
         await flipseven.flipthree(ctx, name)
+    
+    @bot.command()
+    async def answer(ctx, *answer):
+        full_answer = " ".join(answer)
+        await quip.answer(ctx, full_answer)
+    
+    @bot.event
+    async def on_reaction_add(reaction, user):
+        await quip.newVote(reaction, user)
 
         
     async def start(ctx):
