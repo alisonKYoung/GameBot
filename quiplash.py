@@ -91,13 +91,22 @@ class Question():
         self.votes = 0
         self.alreadyVoted = []
         self.votesTally = {}
-    def addVote(self, messageText):
+    def addVote(self, messageText, user):
         for name, answer in self.playerAnswers.items():
             if answer == messageText:
                 self.votesTally[name] += 1
                 self.votes += 1
+                self.alreadyVoted.append(user.name)
                 break
         return self.votes
+    #this won't do anything for now because discord doesn't track removing reactions well
+    def removeVote(self, messageText, user):
+        for name, answer in self.playerAnswers.items():
+            if answer == messageText and not user.name in self.players:
+                self.votesTally[name] -= 1
+                self.votes -= 1
+                self.alreadyVoted.remove(user.name)
+                break
 
 game = Game()
 
@@ -153,15 +162,16 @@ async def setupVote():
     await game.sendVote()
 
 async def newVote(reaction, user):
-    if not user.name in game.questions[game.votingQuestionNum].alreadyVoted:
-        game.questions[game.votingQuestionNum].alreadyVoted.append(user.name)
-        numVotes = game.questions[game.votingQuestionNum].addVote(reaction.message.content)
-        if numVotes == len(game.players) - 2:
-            game.votingQuestionNum += 1
-            if game.votingQuestionNum == len(game.questions):
-                await tallyPoints()
-            else:
-                await setupVote()
+    global game
+    if str(reaction.emoji) == "👍":
+        if not user.name in game.questions[game.votingQuestionNum].alreadyVoted:
+            numVotes = game.questions[game.votingQuestionNum].addVote(reaction.message.content)
+            if numVotes == len(game.players) - 2:
+                game.votingQuestionNum += 1
+                if game.votingQuestionNum == len(game.questions):
+                    await tallyPoints()
+                else:
+                    await setupVote()
 
 async def tallyPoints():
     global game
