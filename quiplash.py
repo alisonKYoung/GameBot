@@ -35,8 +35,14 @@ class Game():
             rplayers = []
             for i in range(q.text.count(self.insertNameString)):
                 randomPlayer = random.choice(self.playerNames)
+                print(randomPlayer)
+                print(self.players[randomPlayer].nickname)
+                if not self.players[randomPlayer].nickname is None:
+                    randomPlayer = self.players[randomPlayer].nickname
                 while randomPlayer in rplayers:
                     randomPlayer = random.choice(self.playerNames)
+                    if not self.players[randomPlayer].nickname is None:
+                        randomPlayer = self.players[randomPlayer].nickname
                 rplayers.append(randomPlayer)
             q.replaceName(self.insertNameString, rplayers)
 
@@ -151,6 +157,7 @@ async def setupquiplash(playerIds, ctx):
         # set up game.players dictionary using the player names as keys
         # afaik we only need the player names and the ids are useless
         game.players[i.name] = QuiplashPlayer(i.id)
+        game.players[i.name].nickname = i.display_name
         game.playerNames.append(i.name)
     # because each player gets two questions and each question has two players
     # the number of questions is just going to be the number of players
@@ -200,6 +207,8 @@ async def answer(ctx, answer):
         game.players[ctx.author.name].questionsAnswered+=1
         if player.questionsAnswered < 2:
             await discord_commands.send_dm(game.channelContext, ctx.author.name, player.questions[1])
+        else: 
+            await discord_commands.send_dm(game.channelContext, ctx.author.name, "all done now look at you go")
     if game.checkAllDone():
         await setupVote()
 
