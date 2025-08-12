@@ -80,11 +80,13 @@ def main():
     async def flip3(ctx, name):
         await flipseven.flipthree(ctx, name)
     
+    # makes it so all the arguments after ?answer are joined into one string
     @bot.command()
     async def answer(ctx, *answer):
         full_answer = " ".join(answer)
         await quip.answer(ctx, full_answer)
     
+    # if we want to add other things we should store which games are running in main
     @bot.event
     async def on_reaction_add(reaction, user):
         await quip.newVote(reaction, user)
