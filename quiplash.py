@@ -136,9 +136,9 @@ class Question():
                 self.alreadyVoted.remove(user.name)
                 break
     # takes in a list of names and replaces each instance of the replacement string in self.text with a name
-    def replaceName(self, replaceString, *names):
+    def replaceName(self, replaceString, names):
         for name in names:
-            self.text.replace(replaceString, name, 1)
+            self.text = self.text.replace(replaceString, name, 1)
 
 # only one global variable needed
 game = Game()
