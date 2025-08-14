@@ -92,11 +92,11 @@ async def setupflipseven(playerIDs, playerNames, ctx):
     await playflipseven(ctx)
     
 
-async def playflipseven(ctx):
+async def playflipseven(ctx, notyou=False):
     global turnNum, roundNum, turnOrder, currentPlayer
     if turnNum == 0:
         await ctx.send(f"round {roundNum}")
-        if roundNum > 1:
+        if roundNum > 1 and not notyou:
             rotateTurnOrder()
     getCurrentPlayer()
     if not currentPlayer.passTurn and not currentPlayer.busted and not currentPlayer.seven:
@@ -187,6 +187,8 @@ async def drawcard(ctx):
             turnNum+=1
     else:
         await ctx.send("not you")
+        await playflipseven(ctx, notyou=True)
+        return
     await playflipseven(ctx)
 
 async def passturn(ctx):
@@ -213,6 +215,8 @@ async def passturn(ctx):
                 return
     else:
         await ctx.send("not you")
+        await playflipseven(ctx, notyou=True)
+        return
     await playflipseven(ctx)
 
 def getCurrentPlayer():
