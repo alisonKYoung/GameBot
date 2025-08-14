@@ -13,7 +13,8 @@ import quiplash as quip
 playerIds = []
 members = []
 playerNames = []
-timeSinceLastMessage = time.time()       
+timeSinceLastMessage = time.time()
+gamesrunning = []
 
 print("____________________________STARTING___________________________________")
 
@@ -31,6 +32,7 @@ def main():
     intents.members = True
 
     bot = commands.Bot(command_prefix="?", intents=intents)
+    client = discord.Client(intents=intents)
 
     # Dictionary to store voice lists
     user_voice_lists = {}
@@ -49,16 +51,19 @@ def main():
 
     @bot.command()
     async def onuw(ctx):
+        gamesrunning.append("onuw")
         await start(ctx)
         await onuw_file.make_onuw(playerIds, members, playerNames,ctx)
 
     @bot.command()
     async def seven(ctx):
+        gamesrunning.append("seven")
         await start(ctx)
         await flipseven.setupflipseven(playerIds, playerNames, ctx)
     
     @bot.command()
     async def quiplash(ctx):
+        gamesrunning.append("quiplash")
         await start(ctx)
         await quip.setupquiplash(playerIds, ctx)
     
@@ -89,7 +94,11 @@ def main():
     # if we want to add other things we should store which games are running in main
     @bot.event
     async def on_reaction_add(reaction, user):
-        await quip.newVote(reaction, user)
+        if user != client.user:
+            if "quiplash" in gamesrunning:
+                await quip.newVote(reaction, user)
+            elif "cah" in gamesrunning:
+                await cah.dosomething()
 
         
     async def start(ctx):
