@@ -6,7 +6,7 @@ async def send_dm(ctx, playername, message):
         if playername not in ("table1", "table2", "table3"):
             member = get(ctx.guild.members, name=playername)
             try:
-                await member.send(blockquote(message))
+                await member.send(message)
                 return True
             except discord.Forbidden:
                 return False
@@ -17,7 +17,7 @@ async def send_dm_with_reactions(bot, ctx, user_id, content, reactions):
     if not user:
         return None
 
-    msg = await user.send(blockquote(content))
+    msg = await user.send(content)
     for emoji in reactions:
         await msg.add_reaction(emoji)
 
