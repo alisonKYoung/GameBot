@@ -73,7 +73,7 @@ async def setupflipseven(playerIDs, playerNames, ctx):
     global deck, player, turnOrder, turnNum, roundNum
     turnNum = 0
     roundNum = 1
-    await ctx.send(f"flip7flip7flip7flip7flip7flip7flip7")
+    await ctx.send("flip7flip7flip7flip7flip7flip7flip7")
     for i in range(len(playerIDs)):
         players[playerIDs[i].name] = FlipSevenPlayer(playerIDs[i].id)
         players[playerIDs[i].name].name = playerNames[i]
@@ -83,10 +83,12 @@ async def setupflipseven(playerIDs, playerNames, ctx):
     turnOrder = [playerNames[i] for i in range(len(playerNames))]
     random.seed()
     random.shuffle(turnOrder)
-    await ctx.send("turn order")
+    turnordertext = "turn order:\n"
     for player in turnOrder:
-        time.sleep(0.5)
-        await ctx.send(player)
+        turnordertext += player
+        if turnOrder.find(player) != len(turnOrder) - 1:
+            turnordertext += "\n"
+    await ctx.send(turnordertext)
     # message = f"{deck[0].get_emoji_string(ctx)} this is a {deck[0].value}"
     # await ctx.send(message)
     await playflipseven(ctx)
