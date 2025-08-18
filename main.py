@@ -15,7 +15,7 @@ playerIds = []
 members = []
 playerNames = []
 timeSinceLastMessage = time.time()
-gamesrunning = []
+gamesrunning = {}
 
 print("____________________________STARTING___________________________________")
 
@@ -52,8 +52,8 @@ def main():
 
     @bot.command()
     async def onuw(ctx):
-        gamesrunning.append("onuw")
         await start(ctx)
+        setupGamesRunning("onuw")
         await onuw_file.make_onuw(playerIds, members, playerNames,ctx)
 
     @bot.command()
@@ -64,14 +64,14 @@ def main():
 
     @bot.command()
     async def seven(ctx):
-        gamesrunning.append("seven")
         await start(ctx)
+        setupGamesRunning("seven")
         await flipseven.setupflipseven(playerIds, playerNames, ctx)
     
     @bot.command()
     async def quiplash(ctx):
-        gamesrunning.append("quiplash")
         await start(ctx)
+        setupGamesRunning("quiplash")
         await quip.setupquiplash(playerIds, ctx)
     
     @bot.command()
@@ -102,11 +102,10 @@ def main():
     @bot.event
     async def on_reaction_add(reaction, user):
         if user != client.user:
-            if "quiplash" in gamesrunning:
+            if "quiplash" == gamesrunning[user.name]:
                 await quip.newVote(reaction, user)
+            elif "cah" == gamesrunning[user.name]:
             elif "cah" in gamesrunning:
-                pass
-
         
     async def start(ctx):
         global playerIds, members, playerNames
@@ -128,6 +127,10 @@ def main():
         playerIds = members[:]
 
         playerNames = [member.name for member in members]
+    
+    def setupGamesRunning(game):
+        for id in playerIds:
+            gamesrunning[id.name] = game
 
         
     bot.run(TOKEN)

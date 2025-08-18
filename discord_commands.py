@@ -30,3 +30,6 @@ async def send_dm_with_reactions(bot, ctx, user_id, content, reactions):
 
     reaction, _ = await bot.wait_for("reaction_add", check=check)
     return str(reaction.emoji)
+
+def blockquote(text):
+    return f">>> {text}"
