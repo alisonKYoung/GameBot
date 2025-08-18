@@ -4,6 +4,7 @@ import discord
 from discord.ext import commands
 from player import Player
 import onuw as onuw_file
+import cah as cah_file
 import discord_commands
 import flipseven
 import time
@@ -56,6 +57,12 @@ def main():
         await onuw_file.make_onuw(playerIds, members, playerNames,ctx)
 
     @bot.command()
+    async def cah(ctx):
+        gamesrunning.append("cah")
+        await start(ctx)
+        await cah_file.setupCAH(playerIds, ctx)
+
+    @bot.command()
     async def seven(ctx):
         await start(ctx)
         setupGamesRunning("seven")
@@ -98,8 +105,7 @@ def main():
             if "quiplash" == gamesrunning[user.name]:
                 await quip.newVote(reaction, user)
             elif "cah" == gamesrunning[user.name]:
-                pass
-
+            elif "cah" in gamesrunning:
         
     async def start(ctx):
         global playerIds, members, playerNames
