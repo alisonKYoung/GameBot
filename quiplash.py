@@ -2,10 +2,11 @@ import random
 import discord_commands
 from collections import deque
 import time
+from classes import Game, Player
 
-class QuiplashPlayer():
-    def __init__(self, playerId):
-        self.playerId = playerId
+class QuiplashPlayer(Player):
+    def __init__(self, playerId, nickname):
+        super().__init__(playerId, nickname)
         self.points = 0
         self.questions = []
         self.questionsAnswered = 0
@@ -13,15 +14,13 @@ class QuiplashPlayer():
     def getPoints(self):
         return self.points
 
-class Game():
-    def __init__(self):
-        self.players = {}
+class QuiplashGame(Game):
+    def __init__(self, baseGame):
+        super().__init__(baseGame.channelContext, baseGame.playerIds)
         self.numQuestions = 0
         self.roundNum = 0
         self.questions = []
         self.allQuestions = []
-        self.playerNames = []
-        self.playerObjects = []
         self.basePointsPerVote = 500
         self.baseWinnerBonus = 100
         self.pointsPerVote = 0
@@ -146,22 +145,14 @@ class Question():
         for name in names:
             self.text = self.text.replace(replaceString, name, 1)
 
-# only one global variable needed
-game = Game()
-
-async def setupquiplash(playerIds, ctx):
+async def setupquiplash(g):
     global game
-    game = Game()
-    await ctx.send(f"now watch me quip, now watch me nae nae")
-    for i in playerIds:
-        # set up game.players dictionary using the player names as keys
-        # afaik we only need the player names and the ids are useless
-        game.players[i.name] = QuiplashPlayer(i.id)
-        game.players[i.name].nickname = i.display_name
-        game.playerNames.append(i.name)
+    game = QuiplashGame(g)
+    game.createPlayers(QuiplashPlayer)
+    await game.channelContext.send(f"now watch me quip, now watch me nae nae")
     # because each player gets two questions and each question has two players
     # the number of questions is just going to be the number of players
-    game.numQuestions = len(playerIds)
+    game.numQuestions = len(game.playerIds)
     with open("quiplashquestions.txt", "r") as f:
         # create a list where each item is a line in the file
         game.allQuestions = list(map(str.rstrip, f.readlines()))
@@ -171,25 +162,24 @@ async def setupquiplash(playerIds, ctx):
     # make it so that instead of bouncing ctx around all the functions
     # we save it in one variable
     # so the events that are from dms can still use the main channel
-    game.channelContext = ctx
-    await nextRound(ctx)
+    await nextRound()
 
-async def nextRound(ctx):
+async def nextRound():
     global game
     await game.newRound()
     if game.roundNum > 3:
         return
-    await ctx.send(f"round {game.roundNum}")
+    await game.channelContext.send(f"round {game.roundNum}")
     for i in range(game.numQuestions):
         game.questions.append(Question(game.allQuestions[i]))
     # make it so the questions won't show up again
     game.allQuestions = game.allQuestions[game.numQuestions:]
     game.distributeQuestions()
 
-    await ctx.send(f"sending question 1 now")
+    await game.channelContext.send(f"sending question 1 now")
     # send each player their first question
     for name, player in game.players.items():
-        await discord_commands.send_dm(ctx, name, player.questions[0])
+        await discord_commands.send_dm(game.channelContext, name, player.questions[0])
 
 async def answer(ctx, answer):
     global game
