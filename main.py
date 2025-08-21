@@ -9,11 +9,9 @@ import discord_commands
 import flipseven
 import time
 import quiplash as quip
+from classes import Game
 
         
-playerIds = []
-members = []
-playerNames = []
 timeSinceLastMessage = time.time()
 gamesrunning = {}
 
@@ -52,27 +50,27 @@ def main():
 
     @bot.command()
     async def onuw(ctx):
-        await start(ctx)
-        setupGamesRunning("onuw")
-        await onuw_file.make_onuw(playerIds, members, playerNames,ctx)
+        game = await start(ctx)
+        setupGamesRunning("onuw", game)
+        await onuw_file.make_onuw(game.playerIds, game.playerIds, list(i.name for i in game.playerIds),ctx)
 
     @bot.command()
     async def cah(ctx):
-        gamesrunning.append("cah")
-        await start(ctx)
-        await cah_file.setupCAH(playerIds, ctx)
+        game = await start(ctx)
+        setupGamesRunning("cah", game)
+        await cah_file.setupCAH(game)
 
     @bot.command()
     async def seven(ctx):
-        await start(ctx)
-        setupGamesRunning("seven")
-        await flipseven.setupflipseven(playerIds, playerNames, ctx)
+        game = await start(ctx)
+        setupGamesRunning("seven", game)
+        await flipseven.setupflipseven(game.playerIds, list(i.name for i in game.playerIds), ctx)
     
     @bot.command()
     async def quiplash(ctx):
-        await start(ctx)
-        setupGamesRunning("quiplash")
-        await quip.setupquiplash(playerIds, ctx)
+        game = await start(ctx)
+        setupGamesRunning("quiplash", game)
+        await quip.setupquiplash(game)
     
     @bot.command()
     async def hit(ctx):
@@ -105,10 +103,9 @@ def main():
             if "quiplash" == gamesrunning[user.name]:
                 await quip.newVote(reaction, user)
             elif "cah" == gamesrunning[user.name]:
-            elif "cah" in gamesrunning:
+                await cah_file.newVote(reaction, user)
         
     async def start(ctx):
-        global playerIds, members, playerNames
         members = await get_voice_members(ctx)
         if not members:
             await ctx.send("❌ You are not in a voice channel or no valid members found.")
@@ -126,11 +123,12 @@ def main():
 
         playerIds = members[:]
 
-        playerNames = [member.name for member in members]
+        game = Game(ctx, playerIds)
+        return game
     
-    def setupGamesRunning(game):
-        for id in playerIds:
-            gamesrunning[id.name] = game
+    def setupGamesRunning(gameName, game):
+        for i in game.playerIds:
+            gamesrunning[i.name] = gameName
 
         
     bot.run(TOKEN)

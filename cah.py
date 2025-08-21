@@ -3,20 +3,20 @@ import discord_commands
 from collections import deque
 import time
 import discord
+from classes import Game, Player
 
-class CAHPlayer():
-    def __init__(self, playerId, name):
-        self.playerId = playerId
-        self.name = name
+class CAHPlayer(Player):
+    def __init__(self, playerId, name, nickname):
+        super().__init__(playerId, name, nickname)
         self.points = 0
         self.white_cards = []
     # getPoints is used for sorting players by num of points
     def getPoints(self):
         return self.points
 
-class Game():
-    def __init__(self):
-        self.players = {}
+class CAHGame(Game):
+    def __init__(self, baseGame):
+        super().__init__(baseGame.channelContext, baseGame.playerIds)
         self.roundNum = 0
         self.black_cards = []
         self.playerNames = []
@@ -121,24 +121,14 @@ class Question():
         for name in names:
             self.text = self.text.replace(replaceString, name, 1)
 
-# only one global variable needed
-game = Game()
-
-async def setupCAH(playerIds, ctx):
+async def setupCAH(g):
     global game
-    game = Game()
-    await ctx.send(f"Cards Against Humanity!!!")
-    for i in playerIds:
-        newplayer = CAHPlayer(i.id,i.name) 
-        game.playerObjects.append(newplayer)
-        # set up game.players dictionary using the player names as keys
-        # afaik we only need the player names and the ids are useless
-        game.players[i.name] = newplayer
-        game.players[i.name].nickname = i.display_name
-        game.playerNames.append(i.name)
+    game = CAHGame(g)
+    await game.channelContext.send(f"Cards Against Humanity!!!")
+    game.createPlayers(CAHPlayer)
     # because each player gets two questions and each question has two players
     # the number of questions is just going to be the number of players
-    game.numQuestions = len(playerIds)
+    game.numQuestions = len(game.playerIds)
     with open("cah_black_cards.txt", "r") as f:
         # create a list where each item is a line in the file
         game.black_cards = list(map(str.rstrip, f.readlines()))
@@ -149,19 +139,14 @@ async def setupCAH(playerIds, ctx):
         # create a list where each item is a line in the file  
         white_cards = list(map(str.rstrip, f.readlines()))
     random.shuffle(white_cards)
-    for player in game.playerObjects:
+    for name, player in game.players.items():
         player.white_cards = []
         for i in range(5):
             card = white_cards.pop(0)
             player.white_cards.append(card)
-    # this is important
-    # make it so that instead of bouncing ctx around all the functions
-    # we save it in one variable
-    # so the events that are from dms can still use the main channel
-    game.channelContext = ctx
-    await nextRound(ctx)
+    await nextRound()
 
-async def nextRound(ctx):
+async def nextRound():
     global game
     #await game.newRound()
     #if game.roundNum > 3:
@@ -174,7 +159,7 @@ async def nextRound(ctx):
     answers = await game.distributeQuestions()
     print(answers)
     for x in answers:
-        await ctx.send(answers[x])
+        await game.channelContext.send(answers[x])
 
     #await ctx.send(f"sending question 1 now")
     # send each player their first question
