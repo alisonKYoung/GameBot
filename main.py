@@ -10,6 +10,7 @@ import flipseven
 import time
 import quiplash as quip
 from classes import Game
+import secrethitler as sh
 
         
 timeSinceLastMessage = time.time()
@@ -73,6 +74,12 @@ def main():
         await quip.setupquiplash(game)
     
     @bot.command()
+    async def hitler(ctx):
+        game = await start(ctx)
+        setupGamesRunning("hitler", game)
+        await sh.setupsh(game)
+
+    @bot.command()
     async def hit(ctx):
         if checkTime():
             await flipseven.drawcard(ctx)
@@ -96,10 +103,22 @@ def main():
         full_answer = " ".join(answer)
         await quip.answer(ctx, full_answer)
     
+    @bot.command()
+    async def nominate(ctx, nominee):
+        await sh.game.nom(ctx, nominee)
+    
+    @bot.command()
+    async def lockinvote(ctx):
+        await sh.game.lockinvote(ctx.author.name)
+    
+    @bot.command()
+    async def execute(ctx, victim):
+        await sh.game.execute(ctx, victim)
+    
     # if we want to add other things we should store which games are running in main
     @bot.event
     async def on_reaction_add(reaction, user):
-        if user != client.user:
+        if not user.bot:
             if "quiplash" == gamesrunning[user.name]:
                 await quip.newVote(reaction, user)
             elif "cah" == gamesrunning[user.name]:

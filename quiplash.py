@@ -5,8 +5,8 @@ import time
 from classes import Game, Player
 
 class QuiplashPlayer(Player):
-    def __init__(self, playerId, nickname):
-        super().__init__(playerId, nickname)
+    def __init__(self, playerId, name, nickname):
+        super().__init__(playerId, name, nickname)
         self.points = 0
         self.questions = []
         self.questionsAnswered = 0

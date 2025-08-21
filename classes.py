@@ -5,7 +5,7 @@ class Game:
     def createPlayers(self, PlayerClass):
         self.players = {}
         for i in self.playerIds:
-            self.players[i.name] = PlayerClass(i.id, i.name, i.nick)
+            self.players[i.name] = PlayerClass(i.id, i.name, i.display_name)
             self.playerNames = list(self.players.keys())
 
 class Player:
