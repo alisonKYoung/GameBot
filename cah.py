@@ -48,10 +48,11 @@ class CAHGame(Game):
                 player.white_cards.remove(chosen_card)
                 filled_card = black_card_text.replace("___", chosen_card)
                 answers[player] = filled_card
-                if len(self.white_cards) >= 0:
-                    for name, player in game.players.items():
-                        card = self.white_cards.pop(0)
-                        player.white_cards.append(card)
+        if len(self.white_cards) >= 0:
+            for name, player in game.players.items():
+                if name != self.playorder[self.turn]:
+                    card = self.white_cards.pop(0)
+                    player.white_cards.append(card)
         self.black_cards.remove(black_card_text)
         self.answers = answers
         return answers
@@ -81,8 +82,9 @@ async def setupCAH(g):
     white_cards = []
     with open("cah_white_cards.txt", "r") as f:
         # create a list where each item is a line in the file  
-        game.white_cards = list(map(str.rstrip, f.readlines()))
+        white_cards = list(map(str.rstrip, f.readlines()))
     random.shuffle(white_cards)
+    game.white_cards = white_cards
     for name, player in game.players.items():
         player.white_cards = []
         for i in range(5):
@@ -109,7 +111,7 @@ async def newVote(reaction, user):
                     print(key)
                     #for key, value in game.answers.items():
                     #    await game.channelContext.send(value)
-                    await game.channelContext.send(f"{key.name} Won this round!")
+                    await game.channelContext.send(f"{key.nickname} Won this round!")
                     key.points += 1
                     await game.newRound()
 
@@ -117,4 +119,4 @@ async def tallyPoints():
     global game
     await game.channelContext.send("---------------leaderboard---------------")
     for name, player in game.players.items():
-        await game.channelContext.send(f"{name} has {player.getPoints()}")
+        await game.channelContext.send(f"{player.nickname} has {player.getPoints()}")
