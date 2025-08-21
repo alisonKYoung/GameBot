@@ -99,7 +99,7 @@ def main():
     # if we want to add other things we should store which games are running in main
     @bot.event
     async def on_reaction_add(reaction, user):
-        if user != client.user:
+        if not user.bot:
             if "quiplash" == gamesrunning[user.name]:
                 await quip.newVote(reaction, user)
             elif "cah" == gamesrunning[user.name]:
