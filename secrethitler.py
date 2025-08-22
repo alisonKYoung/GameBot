@@ -95,7 +95,6 @@ class SecretHitlerGame(Game):
         self.election = True
 
     def setPresident(self):
-        self.rotateTurnOrder()
         self.president = self.playerNames[0]
         self.rotateTurnOrder()
     
@@ -128,7 +127,6 @@ class SecretHitlerGame(Game):
     
     async def lockinvote(self, username):
         if username == self.president and self.election:
-            self.election = False
             reaction_counts = {}
             self.nomMessage = await self.channelContext.fetch_message(self.nomMessage.id)
             for reaction in self.nomMessage.reactions:
@@ -140,11 +138,12 @@ class SecretHitlerGame(Game):
                 await self.channelContext.send("you did not fail")
                 self.chancellor = self.cNom
                 self.termLimited = []
-                self.termLimited.append(self.president)
-                self.termLimited.append(self.chancellor)
+                # self.termLimited.append(self.president)
+                # self.termLimited.append(self.chancellor)
                 self.electionFails = 0
                 if await self.checkWin():
                     return
+                self.election = False
                 await self.lawmake()
             else:
                 await self.channelContext.send("wow you failed a vote")
@@ -153,6 +152,7 @@ class SecretHitlerGame(Game):
                     await self.enactTop()
                     self.electionFails = 0
                 self.setPresident()
+                self.election = False
                 await self.newTurn()
     
     async def lawmake(self):
@@ -191,11 +191,13 @@ class SecretHitlerGame(Game):
         await self.newTurn()
     
     async def checkWin(self):
-        if (self.fasPolicies >= 3 and self.hitler == self.chancellor) or self.fasPolicies == 6:
+        if (self.fasPolicies >= 3 and self.hitler == self.chancellor and self.election) or self.fasPolicies == 6:
             await self.channelContext.send("Fascists win!")
+            await self.channelContext.send(f"The fascists were: {" ".join(self.fascists)}\nHitler was: {self.hitler}")
             return True
         if self.libPolicies == 5 or self.players[self.hitler].dead:
             await self.channelContext.send("Liberals win!")
+            await self.channelContext.send(f"The fascists were: {" ".join(self.fascists)}\nHitler was: {self.hitler}")
             return True
         return False
 
